@@ -26,16 +26,6 @@ def _build_container() -> tuple[CryptoEngine, KeyDeriver, FileRepository, Passwo
     return AesGcmEngine(), ScryptKeyDeriver(), DiskFileRepository(), CliPasswordProvider()
 
 
-def _default_output(input_path: Path, mode: str) -> Path:
-    if mode == "encrypt":
-        return input_path.with_suffix(input_path.suffix + ".enc")
-    stem = input_path.stem
-    if stem.endswith(".enc"):
-        stem = stem[:-4]
-    return input_path.with_name(stem + input_path.suffix.replace(".enc", "") if input_path.suffix == ".enc" else stem)
-    return input_path.with_suffix(".dec.txt")
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="cryptex",
@@ -53,7 +43,10 @@ def main(argv: list[str] | None = None) -> int:
     dec.add_argument("input", type=Path, help="Encrypted file path")
     dec.add_argument("-o", "--output", type=Path, help="Output file path (default: <input>.dec.txt)")
 
-    args = parser.parse_args(argv)
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit:
+        return 1
     crypto, deriver, files, passwords = _build_container()
 
     try:
